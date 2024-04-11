@@ -12,16 +12,16 @@ The specific vape being researched in this project comes by various names, but t
 
 The vape uses the following hardware:
 
- - Nations Tech [N32G01K8Q7-1](https://www.nationstech.com/uploadfile/file/20220907/1662539811646982.pdf) microcontroller, featuring a 48MHz Arm Cortex-M0 core, 64k of internal Flash memory, 8k of SRAM.
+ - Nations Tech [N32G01K8Q7-1](https://www.nationstech.com/uploadfile/file/20220907/1662539811646982.pdf) microcontroller, featuring a 48MHz Arm Cortex-M0 core, 64k of internal Flash memory, 8k of SRAM
  - Giantech Semiconductor [GT25Q80A](https://uploadcdn.oneyac.com/upload/document/1676268194927_6539.pdf) 8Mbit (1Mbyte) SPI NOR Flash
  - LowPowerSemi [LP4068](https://pdf1.alldatasheet.com/datasheet-pdf/download/1244042/POWER/LP4068.html) linear Li-ion battery charger, configured for ~550mA charge current
  - LowerPowerSemi LDO voltage regulator, labeled "LPS 2NDJ1" but exact model is unknown
  - Generic 5-pin SOT-23 vape controller, labeled "AjCH" with electret-type microphone sensing element
- - 0.96-inch IPS TFT display, described below
+ - 0.96-inch 80x160 IPS TFT display, described below
 
 # Display
 
-The vape uses a 0.96-inch IPS LCD, with a 13-pin 0.7mm-pitch flat-flex (FPC) cable that is soldered to the vape mainboard. It connects via 4-wire SPI (data, clock, data/command, chip select), and appears to use the [ST7735S](https://www.displayfuture.com/Display/datasheet/controller/ST7735.pdf) controller. It even uses the same pinout for commercially available displays, like the [Smart Prototyping #102106](https://www.smart-prototyping.com/0_96-TFT-IPS-Bare-Display-ST7735-SPI-80-160).
+The vape uses an 80x160 resolution 0.96-inch IPS LCD, with a 13-pin 0.7mm-pitch flat-flex (FPC) cable that is soldered to the vape mainboard. It connects via 4-wire SPI (data, clock, data/command, chip select), and appears to use the [ST7735S](https://www.displayfuture.com/Display/datasheet/controller/ST7735.pdf) controller. It even uses the same pinout for commercially available displays, like the [Smart Prototyping #102106](https://www.smart-prototyping.com/0_96-TFT-IPS-Bare-Display-ST7735-SPI-80-160).
 
 ## Display Pinout
 
@@ -47,7 +47,7 @@ There are two forms of Flash memory on the vape: internal Flash on the microcont
 
 ## External Flash Image Format
 
-All images are stored on the external Flash as raw RGB565 16-bit bitmaps (i.e. each pixel takes up 2 bytes of data). Conversion tools, such as ImageConverter565 from Rinky-Dink Electronic's [UTFT library](http://www.rinkydinkelectronics.com/library.php?id=51), can be used to convert image formats like JPEG/PNG into a raw binary file that can be patched into the external Flash at the corresponding offset. There is no metadata stored with the raw images, so the image dimensions must be manually supplied, as shown in the table below.
+All images are stored on the external Flash as raw RGB565 16-bit bitmaps (i.e. each pixel takes up 2 bytes of data). Conversion tools, such as ImageConverter565 from Rinky-Dink Electronics' [UTFT library](http://www.rinkydinkelectronics.com/library.php?id=51), can be used to convert image formats like JPEG/PNG into a raw binary file that can be patched into the external Flash at the corresponding offset. There is no metadata stored with the raw images, so the image dimensions must be manually supplied, as shown in the table below.
 
 ## External Flash Memory Layout
 
