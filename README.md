@@ -15,7 +15,7 @@ The vape uses the following hardware:
  - Nations Tech [N32G01K8Q7-1](https://www.nationstech.com/uploadfile/file/20220907/1662539811646982.pdf) microcontroller, featuring a 48MHz Arm Cortex-M0 core, 64k of internal Flash memory, 8k of SRAM
  - Giantech Semiconductor [GT25Q80A](https://uploadcdn.oneyac.com/upload/document/1676268194927_6539.pdf) 8Mbit (1Mbyte) SPI NOR Flash
  - LowPowerSemi [LP4068](https://pdf1.alldatasheet.com/datasheet-pdf/download/1244042/POWER/LP4068.html) linear Li-ion battery charger, configured for ~550mA charge current
- - LowerPowerSemi LDO voltage regulator, labeled "LPS 2NDJ1" but exact model is unknown
+ - LowPowerSemi LDO voltage regulator, labeled "LPS 2NDJ1" but exact model is unknown
  - Generic 5-pin SOT-23 vape controller, labeled "AjCH" with electret-type microphone sensing element
  - 0.96-inch 80x160 IPS TFT display, described below
 
@@ -43,7 +43,7 @@ The vape uses an 80x160 resolution 0.96-inch IPS LCD, with a 13-pin 0.7mm-pitch 
 
 # Flash Memory
 
-There are two forms of Flash memory on the vape: internal Flash on the microcontroller, and 1 megabyte (8 megabits) of external SPI NOR Flash. The former contains the firmware, while the latter contains all the images that are displayed on the LCD, as well as the total time that the vape heating coil was in use; this counter is used to derive the number of "bars" displayed on the vape juice meter. Analysis of the LCD data bus suggests that the microcontroller uses DMA (Direct Memory Access) to stream image data from the external Flash into the LCD, as data transfers occur as contiguous 4096-byte chunks, corresponding to a single NOR Flash page.
+There are two forms of Flash memory on the vape: internal Flash on the microcontroller, and 1 megabyte (8 megabits) of external SPI NOR Flash. The former contains the firmware, while the latter contains all the images that are displayed on the LCD, as well as the total time that the vape heating coil was in use; this counter is used to derive the number of "bars" displayed on the vape juice meter. Analysis of the LCD data bus (see the .dsl logic capture using [DreamSourceLab DSView](https://www.dreamsourcelab.com/download/)) suggests that the microcontroller uses DMA (Direct Memory Access) to stream image data from the external Flash into the LCD, as data transfers occur as contiguous 4096-byte chunks, corresponding to a single NOR Flash page.
 
 ## External Flash Image Format
 
