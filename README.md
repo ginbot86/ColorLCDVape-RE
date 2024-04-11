@@ -23,6 +23,24 @@ The vape uses the following hardware:
 
 The vape uses a 0.96-inch IPS LCD, with a 13-pin 0.7mm-pitch flat-flex (FPC) cable that is soldered to the vape mainboard. It connects via 4-wire SPI (data, clock, data/command, chip select), and appears to use the [ST7735S](https://www.displayfuture.com/Display/datasheet/controller/ST7735.pdf) controller. It even uses the same pinout for commercially available displays, like the [Smart Prototyping #102106](https://www.smart-prototyping.com/0_96-TFT-IPS-Bare-Display-ST7735-SPI-80-160).
 
+## Display Pinout
+
+| Pin | Name   | Function                              |
+|-----|--------|---------------------------------------|
+| 1   | TP0/NC | Unused                                |
+| 2   | TP1/NC | Unused                                |
+| 3   | SDIN   | SPI data to LCD                       |
+| 4   | SCLK   | SPI clock                             |
+| 5   | RS     | Logic low = command, high = data      |
+| 6   | /RST   | Reset (active-low)                    |
+| 7   | /CS    | Chip select (active-low)              |
+| 8   | GND    | Power supply/signal ground            |
+| 9   | NC     | Not connected                         |
+| 10  | VDD    | Power supply (3.3V)                   |
+| 11  | LEDK   | LED backlight cathode                 |
+| 12  | LEDA   | LED backlight anode                   |
+| 13  | GND    | Power supply/signal ground            |
+
 # Flash Memory
 
 There are two forms of Flash memory on the vape: internal Flash on the microcontroller, and 1 megabyte (8 megabits) of external SPI NOR Flash. The former contains the firmware, while the latter contains all the images that are displayed on the LCD, as well as the total time that the vape heating coil was in use; this counter is used to derive the number of "bars" displayed on the vape juice meter. Analysis of the LCD data bus suggests that the microcontroller uses DMA (Direct Memory Access) to stream image data from the external Flash into the LCD, as data transfers occur as contiguous 4096-byte chunks, corresponding to a single NOR Flash page.
