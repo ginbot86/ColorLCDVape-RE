@@ -43,7 +43,7 @@ The vape uses an 80x160 resolution 0.96-inch IPS LCD, with a 13-pin 0.7mm-pitch 
 
 # Flash Memory
 
-There are two forms of Flash memory on the vape: internal Flash on the microcontroller, and 1 megabyte (8 megabits) of external SPI NOR Flash. The former contains the firmware, while the latter contains all the images that are displayed on the LCD, as well as the total time that the vape heating coil was in use; this counter is used to derive the number of "bars" displayed on the vape juice meter. Analysis of the LCD data bus (see the .dsl logic capture using [DreamSourceLab DSView](https://www.dreamsourcelab.com/download/)) suggests that the microcontroller uses DMA (Direct Memory Access) to stream image data from the external Flash into the LCD, as data transfers occur as contiguous 4096-byte chunks, corresponding to a single NOR Flash page.
+There are two forms of Flash memory on the vape: internal Flash on the microcontroller, and 1 megabyte (8 megabits) of external SPI NOR Flash. The former contains the firmware, while the latter contains all the images that are displayed on the LCD, as well as the total time that the vape heating coil was in use; this counter is used to derive the number of "bars" displayed on the vape juice meter. Analysis of the LCD data bus (see the .dsl logic capture using [DreamSourceLab DSView](https://www.dreamsourcelab.com/download/)) suggests that the microcontroller uses DMA (Direct Memory Access) to stream image data from the external Flash into the LCD, as data transfers occur as contiguous 4096-byte chunks, corresponding to a single NOR Flash page. Analysis of the microcontroller's memory indicates that the DMA memory buffer lies in RAM addresses 0x2000022C-0x2000062B.
 
 ## External Flash Image Format
 
@@ -161,13 +161,35 @@ All images are stored on the external Flash as raw RGB565 16-bit bitmaps (i.e. e
 | 105       | F8004        | 1            |  N/A         |  N/A         | Vape In Use Flag (0xBB)           |         |  N/A    | 3     |
 
 ### Notes
-  1. Some animation frames found in external Flash memory appear to be unused (and even reference the RAZ brand name), but could possibly be activated in firmware or somewhere else; this has not yet been researched.
+  1. Some animation frames found in external Flash memory appear to be unused (and even reference the RAZ brand name despite the other branding showing Kraze), but could possibly be activated in firmware or somewhere else; this has not yet been researched.
   2. The juice meter value is derived from the vape timer, but the exact formula to derive it has not yet known. However, what is known is that it has no overflow protection and setting the value back to 0x00000000 will reset the juice meter.
-  3. If Flash locations 0xF8000-0xF8004 are erased to 0xFF bytes, this flag byte will be reinitialized to 0xBB and the timer will be reinitialized to 0x00000000, also effectively resetting the juice meter. Additionally, any other bytes in this Flash sector will be clobbered to 0xFF, since a page erase is issued whenever the counter is updated; only the timer and flag bytes are preserved by the firmware.
-  
+  3. If Flash locations 0xF8000-0xF8004 are erased to 0xFF bytes, this flag byte will be reinitialized to 0xBB and the timer will be reinitialized to 0x00000000, also effectively resetting the juice meter. Setting the flag byte at 0xF8004 to anything that is not 0xBB will accomplish the same effect. Additionally, any other bytes in this Flash sector will be clobbered to 0xFF, since a page erase is issued whenever the counter is updated; only the timer and flag bytes are preserved by the firmware.
+
+### Flash Dump Unpacking/Repacking, Customization Tools
+
+Two Python scripts have been included to aid in splitting and reassembling the Flash dump into/from the individual images stored in the SPI Flash: ```split-flashdump.py``` and ```assemble-flashdump.py```. The tools currently do not perform format conversion (getting ChatGPT to help me this far was already a long process), but go a long way in aiding creation of custom "theme" packs. Unused resources can be removed from the repacked Flash dump by keeping them out of the directory containing the files to be reassembled; those unused regions will stay as 0xFF/erased bytes.
+
+The repacker, ```assemble-flashdump.py```, expects the input filenames to be of a specific format, as it uses the hexadecimal-encoded offset to determine where to insert each piece into the 1MB Flash dump file (see split_map.csv or the included example theme, described below in *Custom Theme Packs*):
+
+ - ```{index}_{offset}_{width}x{height}_{category}_{sequence}.bin```
+ - Example: ```19_33d00_80x160_vapeanim-0.bin```
+
+To convert PNG or JPEG images, use the previously-mentioned UTFT library's ```ImgConv.exe``` tool:
+ - ```ImgConv.exe *.png /r```
+ - ```ImgConv.exe *.jpg /r```
+ - ```ren *.raw *.bin```
+ 
+*Note: ensure the pictures to be converted into .bin format are the correct dimensions BEFORE converting them!*
+ 
+### Custom Theme Packs
+
+As a proof of concept, a finished Windows 95-style theme pack is included; it implements all resources for the battery and juice indicators, charging animation (only plugin background 3 and charger logo wipe, as that is the only used animation set with the tested firmware), and vaping animation (an aspect-ratio correct capture of the 3D Pipes screensaver). All that is needed is access to the SPI Flash and a means of reprogramming it. Room for extension of this concept could be through a cheap SWD USB dongle, connected through the USB-C port, and some software that uploads a small reprogramming tool into the microcontroller's RAM, potentially eliminating the need to desolder the Flash chip.
+
+All of this customization is possible without touching the microcontroller's firmware!
+
 ## Resetting the Vape Juice Meter
 
-As described in notes 2 and 3 above, filling external Flash locations 0xF8000-0xF8004 with 0xFF will reset the juice meter to full, permitting reuse of the vape once the reservoir is refilled. The microcontroller itself then needs to be reset by pulling the nRST pin to ground, or by power cycling it by disconnecting and reconnecting the battery; this will likely have already happened if one is desoldering and resoldering the external Flash for reprogramming/patching.
+As described in *External Flash Memory Layout*, notes 2 and 3 above, filling external Flash locations 0xF8000-0xF8004 with 0xFF will reset the juice meter to full, permitting reuse of the vape once the reservoir is refilled. The microcontroller itself then needs to be reset by pulling the nRST pin to ground, or by power cycling it by disconnecting and reconnecting the battery; this will likely have already happened if one is desoldering and resoldering the external Flash for reprogramming/patching.
   
 # External I/O
 
@@ -180,3 +202,49 @@ The firmware on the microcontroller is not readout-protected, so further researc
 ## UART Test Pads
 
 Some of the vape mainboards that were tested, had RX/TX test pads on the backside of the board. This has not yet been researched, as to how this port interacts with the firmware, and/or if it can be used to update the external Flash contents.
+
+# Board-to-board Interconnect
+
+The vape is made up of two PCBs, joined together with a 9-pin 0.15mm-pitch right-angle male pin header:
+
+  1. Power board: USB-C interface, battery, vape controller with electret-type sensing element
+  2. Logic board: LCD, battery charging, microcontroller, SPI Flash
+
+## Interconnect Pinout
+
+Pin 1 is denoted by a square pad on the power board, and a corresponding pad on the logic board's underside (opposite side of the microcontroller, SPI Flash and LCD). ***WARNING: The pin 1 markings may be opposite of each other between the two boards!***
+
+| Power Board Pin | Logic Board Pin | Name      | Function                                                              |
+|-----------------|-----------------|-----------|-----------------------------------------------------------------------|
+| 1               | 9               | VBAT      | Battery positive (+) on power board                                   |
+| 2               | 8               | VBUS      | +5V from USB-C port on power board with SMD fuse, "B" marking         |
+| 3               | 7               | GND       | Power/signal ground                                                   |
+| 4               | 6               | COIL_DRV  | Heater control signal from MCU on logic board (active-high)           |
+| 5               | 5               | PUFF_DET  | Puff detection signal from power board vape controller (note 1)       |
+| 6               | 4               | CC2/SWCLK | USB-C Rd pulldown 2 / SWD debug interface clock to MCU on logic board |
+| 7               | 3               | CC1/SWDIO | USB-C Rd pulldown 1 / SWD debug interface data to MCU on logic board  |
+| 8               | 2               | VDD       | 3V supply from LDO regulator on logic board to vape controller        |
+| 9               | 1               | COIL_DET? | Heater coil detection to MCU on logic board (see note 2)              |
+
+### Notes
+
+  1. The puff detection signal seems to be a ~500Hz pulse train, either from the vape controller's LED driver output, or the heater output which might already be PWM'd for heater output. The lack of a "blink" when the 10 second timeout is exceeded suggests the latter.
+  2. Pin 9/1 on the power/logic board header goes directly from the heater coil pin into a 5.1k/5.1k voltage divider on the logic board. Although currently unconfirmed, this might go to an ADC pin on the microcontroller to aid with load detection (a full Vbat reading could suggest that the heater coil is disconnected, and the vape animation will not play even if the vape controller is detecting a "puff").
+  
+# Firmware
+
+The N32G01 series of microcontrollers are advertised in the datasheet as having onboard Flash encryption and secure boot support, but this feature (thankfully) is not used on the vape(s) tested so far (namely the Kraze HD7K).
+  
+## Firmware Dump
+
+Not much work has gone into reverse-engineering the firmware itself, but a flash dump was able to be obtained with the use of a Segger J-Link and its corresponding J-Mem software, accessed through the SWD debug/programming port. Like many Arm-based MCUs, the Flash is located at 0x08000000 but is also mirrored at 0x00000000. A dump of the firmware was taken from addresses 0x08000000-0x0800FFFF (64k), and a cursory glance at the firmware dump shows that only approximately 50% of the Flash space was actually used (addresses from just before 0x8000 through 0xFFFF were all 0xFF bytes, indicating erased/unprogrammed memory). No human-readable strings appear to be present in the firmware dump.
+  
+## Firmware Version "Easter Egg(?)"
+
+A "secret" version number is displayed on-screen if the USB-C power is rapidly turned on and off (but seems to occur inconsistently). When attempted with a Kraze HD7K, the screen turns black, and the text "GV-K23 0904V1" is displayed in red across two lines of text for a couple seconds; it appears to be rendered with a monospaced version of the 12-point-size "System" font from Windows. This hints to an internal product name of "GV-K23" and the firmware being revision 1, dated September 4, 2023. Coincidentally, near the end of the used Flash address space is a block of bytes filled with 0x00, and 0xE8E4, which looks suspiciously like black and red-orange pixel data. Further analysis of the raw data from this region confirms that the version number is stored as a raw bitmap and not rendered from a text string (explained below).
+  
+### Firmware Version Bitmap
+Inside the firmware Flash dump, at addresses 0x7066-0x7E75, appears to be a bitmap version of the aforementioned version number. It appears to be only 60x30 pixels in size, but there are 0x00 padding bytes around this bitmap that do not align to 120-byte boundaries (60 pixels), making determining the "true" image size difficult without decompiling the firmware and finding the function that triggers the version screen.
+
+#### Trademarks
+All trademarks are the property of their respective owners.
