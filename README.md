@@ -1,12 +1,28 @@
 # ColorLCDVape-RE
- Reverse-engineering of some rechargeable disposable vapes that include a small color TFT LCD (Raz/Kraze HD7K/etc.).
+ Reverse-engineering of some rechargeable disposable vapes that include a small color TFT LCD (Raz TN9000/Kraze HD7K/etc.).
  
  Further updates can be found at https://github.com/ginbot86/ColorLCDVape-RE
 
 # Introduction
 Some disposable vapes on the market include accoutrements like a color LCD screen and USB-C rechargeability, yet are single-use throwaway devices; this makes such devices quite ecologically harmful. On the other hand, this opens up opportunities for hardware salvage by hobbyists/engineers, reusing the vape as-is by refilling it with fresh vape juice and resetting the internal meter, or even customization by editing the onboard images.
 
-The specific vape being researched in this project comes by various names, but the one that was researched specifically was called the Kraze HD7K. However, this vape has also been seen under the "RAZ" brand name.
+The specific vape being researched in this project comes by various names, but the one that was researched specifically was called the Kraze HD7K. However, this vape has also been seen under the "RAZ" brand name, like the RAZ TN9000.
+
+# Disclaimers/Hazards
+
+Disposable vapes generally use Li-ion batteries without any protection circuitry. Short circuits could dissipate uncontrolled amounts of power, causing personal injury and/or property damage. Any work done on these vapes is done at your own risk.
+
+It has been determined that there are multiple circuit revisions of these vapes, which may have incompatibilities that could result in device damage if versions are mismatched. Verify connections and firmware compatibility before proceeding with any modifications.
+
+Additionally, vape juice/"e-liquid" can contain high concentrations of nicotine, which is absorbed through skin. Handling of the vape's internals should be done with gloves until the internal parts are cleaned of juice and/or residue.
+
+# Additional Works
+
+Other people's work on these vapes include, but are not limited to:
+
+ - https://github.com/xbenkozx/RAZ-RE
+
+Work done in the aforementioned repositories may or may not be based on work done in this project; it is meant to link similar projects in the hopes that more community efforts can be undertaken on these vapes.
 
 # Hardware
 
@@ -185,6 +201,8 @@ To convert PNG or JPEG images, use the previously-mentioned UTFT library's ```Im
 
 As a proof of concept, a finished Windows 95-style theme pack is included; it implements all resources for the battery and juice indicators, charging animation (only plugin background 3 and charger logo wipe, as that is the only used animation set with the tested firmware), and vaping animation (an aspect-ratio correct capture of the 3D Pipes screensaver). All that is needed is access to the SPI Flash and a means of reprogramming it. Room for extension of this concept could be through a cheap SWD USB dongle, connected through the USB-C port, and some software that uploads a small reprogramming tool into the microcontroller's RAM, potentially eliminating the need to desolder the Flash chip.
 
+A blank/editable template has also been included. All frames are implemented with frame numbers for animations.
+
 All of this customization is possible without touching the microcontroller's firmware!
 
 ## Resetting the Vape Juice Meter
@@ -241,7 +259,7 @@ Not much work has gone into reverse-engineering the firmware itself, but a flash
   
 ## Firmware Version "Easter Egg(?)"
 
-A "secret" version number is displayed on-screen if the USB-C power is rapidly turned on and off (but seems to occur inconsistently). When attempted with a Kraze HD7K, the screen turns black, and the text "GV-K23 0904V1" is displayed in red across two lines of text for a couple seconds; it appears to be rendered with a monospaced version of the 12-point-size "System" font from Windows. This hints to an internal product name of "GV-K23" and the firmware being revision 1, dated September 4, 2023. Coincidentally, near the end of the used Flash address space is a block of bytes filled with 0x00, and 0xE8E4, which looks suspiciously like black and red-orange pixel data. Further analysis of the raw data from this region confirms that the version number is stored as a raw bitmap and not rendered from a text string (explained below).
+A "secret" version number is displayed on-screen if the USB-C power is rapidly turned on and off (but seems to occur inconsistently). When attempted with a Kraze HD7K, the screen turns black, and the text "GV-K23 0904V1" is displayed in red across two lines of text for a couple seconds; it appears to be rendered with a monospaced version of the 12-point-size "System" font from Windows. This hints to an internal product name of "GV-K" and the firmware being revision 1, dated September 4, 2023. Coincidentally, near the end of the used Flash address space is a block of bytes filled with 0x00, and 0xE8E4, which looks suspiciously like black and red-orange pixel data. Further analysis of the raw data from this region confirms that the version number is stored as a raw bitmap and not rendered from a text string (explained below).
   
 ### Firmware Version Bitmap
 Inside the firmware Flash dump, at addresses 0x7066-0x7E75, appears to be a bitmap version of the aforementioned version number. It appears to be only 60x30 pixels in size, but there are 0x00 padding bytes around this bitmap that do not align to 120-byte boundaries (60 pixels), making determining the "true" image size difficult without decompiling the firmware and finding the function that triggers the version screen.
